@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Typography, Button, Modal, Form, Input, Upload, message, Space, Tag, Divider, Spin } from 'antd';
+import { Typography, Button, Table, Space, Tag, Divider, Spin } from 'antd';
 import { ArrowLeftOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { ApplyJob } from './ApplyJob';
-import { Link, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 
 const { Title, Paragraph, Text } = Typography;
@@ -18,14 +18,23 @@ interface UIJob {
     languages: string[];
     certificates: string[];
     educationLevel: string;
+    skills_weight: number;
+    yearsExp_weight: number;
+    languages_weight: number;
+    job_title_weight: number;
+    education_weight: number;
+    certificates_weight: number;
+    score: number;
+    shortDes: string;
 }
 
-export const JobDescription = () => {
+export const AdminJobDescription = () => {
     const [job, setJob] = useState<UIJob | null>(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
 
     // Get id from route params
     const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchJobs = async () => {
@@ -45,26 +54,51 @@ export const JobDescription = () => {
         setIsModalVisible(true);
     };
 
+    const handleBackClick = () => {
+        navigate(-1);
+    };
+
+    const columns = [
+        {
+            title: 'Criterion',
+            dataIndex: 'criterion',
+            key: 'criterion',
+        },
+        {
+            title: 'Weightage (%)',
+            dataIndex: 'weight',
+            key: 'weight',
+        },
+    ];
+
+
+
+
     // If job data hasn't loaded yet, render loading state
     if (!job) {
         return <Spin />;
     }
 
+    const tableData = [
+        { key: '1', criterion: 'Skills', weight: job.skills_weight },
+        { key: '2', criterion: 'Years of Experience', weight: job.yearsExp_weight },
+        { key: '3', criterion: 'Languages', weight: job.languages_weight },
+        { key: '4', criterion: 'Job Title', weight: job.job_title_weight },
+        { key: '5', criterion: 'Education', weight: job.education_weight },
+        { key: '6', criterion: 'Certificates', weight: job.certificates_weight },
+        // You can add more data if required
+    ];
 
     return (
         <Spin spinning={!job}>
             <Space style={{ marginTop: 16, display: 'flex' }}>
-                <Link to={"/jobs"}><Button icon={<ArrowLeftOutlined />} type="link" size="large">All Jobs</Button></Link>
-
+                <Button icon={<ArrowLeftOutlined />} onClick={handleBackClick} type="link" size="large">Back</Button>
             </Space>
             <div>
                 <Title>{job.title}  - {job.company}</Title>
                 <Tag color="blue">{job.field}</Tag>
 
                 <Divider />
-                <Space style={{ marginTop: 16, display: 'flex', justifyContent: "end" }}>
-                    <Button icon={<ArrowRightOutlined />} type="primary" size="large" onClick={applyForJob}>Apply</Button>
-                </Space>
                 <div style={{ textAlign: 'left' }}>
                     <Title level={4}>Job Description</Title>
                     <div dangerouslySetInnerHTML={{ __html: job.description }}></div>
@@ -106,6 +140,12 @@ export const JobDescription = () => {
 
 
                 <ApplyJob jobId={job.id} jobTitle={job.title} visible={isModalVisible} setdata={setIsModalVisible} />
+
+                <Divider />
+                <Title level={4}>Weightage and Scores</Title>
+                <Table dataSource={tableData} columns={columns} pagination={false} />
+                <Divider />
+
             </div>
         </Spin>
 

@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Input, InputNumber, Button, Form, Card, Select, message, Spin } from 'antd';
 import { PlusOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'antd/es/form/Form';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
-interface IJob {
+export interface IJob {
     title: string;
     description: string;
     shortDes: string;
@@ -22,9 +24,14 @@ interface IJob {
     job_title_weight: number;
     education_weight: number;
     certificates_weight: number;
+    score: number;
 }
 
-const CreateJobForm: React.FC = () => {
+interface IProps {
+    jobData?: IJob; // Add this prop for prefilling data if in edit mode.
+}
+
+const CreateEditJobForm: React.FC<IProps> = ({ jobData }) => {
     const [job, setJob] = useState<IJob>({
         title: "",
         description: "",
@@ -42,21 +49,47 @@ const CreateJobForm: React.FC = () => {
         job_title_weight: 0,
         education_weight: 0,
         certificates_weight: 0,
+        score: 0
     });
 
+    const isEditMode = Boolean(jobData); // Determine if it's in edit mode or create mode
+
+    const navigate = useNavigate();
+
     const handleInputChange = (value: string | number, name: string) => {
-        setJob({ ...job, [name]: value });
+        setJob((exJob) => {
+            return {
+                ...exJob, [name]: value
+            }
+        });
         form.setFieldsValue({ [name]: value });
     };
 
     const handleSelectChange = (name: string, value: string[]) => {
-        setJob({ ...job, [name]: value });
+        setJob((exJob) => {
+            return {
+                ...exJob, [name]: value
+            }
+        });
         form.setFieldsValue({ [name]: value });
     };
 
     const [loading, setLoading] = useState(false);
 
     const [form] = useForm();
+
+    useEffect(() => {
+        if (isEditMode && jobData) {
+            form.setFieldsValue(jobData); // Prefill form values if in edit mode
+
+            setJob(jobData);
+        }
+    }, []);
+
+
+    useEffect(() => {
+        console.log(job)
+    }, [job]);
 
     const checkTotalWeight = () => {
         const totalWeight = job.skills_weight + job.yearsExp_weight + job.languages_weight + job.job_title_weight + job.education_weight + job.certificates_weight;
@@ -70,17 +103,35 @@ const CreateJobForm: React.FC = () => {
 
 
     const handleSubmit = async () => {
+        console.log(job)
+        const totalWeight = job.skills_weight + job.yearsExp_weight + job.languages_weight + job.job_title_weight + job.education_weight + job.certificates_weight;
+        console.log(totalWeight)
+        if (totalWeight != 100) {
+            message.error("The total of all weights should be 100!");
+            return;
+        }
+
+
         try {
             // This will throw an error if validation fails
             const values = await form.validateFields();
-            console.log(values);
 
-            setLoading(true);
             try {
-                const response = await axios.post('http://127.0.0.1:8000/jobs', job);
-                message.success("Job created successfully");
+                setLoading(true);
+
+                if (isEditMode) {
+                    // Update the job
+                    const response = await axios.put('http://127.0.0.1:8000/jobs', job);
+                    message.success("Job updated successfully");
+                } else {
+                    // Create a new job
+                    const response = await axios.post('http://127.0.0.1:8000/jobs', job);
+                    message.success("Job created successfully");
+                }
+
+                navigate("/admin/jobs");
             } catch (error: any) {
-                message.error("Error while creating job: " + (error.response?.data?.message || error.message));
+                message.error("Error: " + (error.response?.data?.message || error.message));
             } finally {
                 setLoading(false);
             }
@@ -90,23 +141,37 @@ const CreateJobForm: React.FC = () => {
         }
     };
 
+
     return (
         <Spin spinning={loading}>
             <div style={{ display: "flex", marginBottom: '20px' }}>
-                <Link to='/admin/jobs'> <Button icon={<ArrowLeftOutlined />} type="primary">
+                <Link to='/admin/jobs'> <Button icon={<ArrowLeftOutlined />} type="link">
                     back
                 </Button></Link>
             </div>
-            <Card title={<div style={{ fontSize: '28px' }}>Create a New Job</div>} style={{ width: '100%' }}>
+            <Card title={<div style={{ fontSize: '28px' }}>{isEditMode ? 'Edit Job' : 'Create a New Job'} </div>} style={{ width: '100%' }}>
                 <Form form={form} layout="vertical" onFinish={handleSubmit} onFinishFailed={(err) => console.log(err)} >
                     <Form.Item label="Job Title" name={"title"} rules={[{ required: true, message: 'Please input Job Title!' }]}>
                         <Input onChange={(e) => handleInputChange(e.target.value, "title")} />
                     </Form.Item>
-
                     <Form.Item label="Job Description" name={"description"} rules={[{ required: true, message: 'Please input Description!' }]}>
-                        <Input.TextArea onChange={(e) => handleInputChange(e.target.value, "description")} />
-                    </Form.Item>
+                        <div>
+                            <ReactQuill
+                                value={job.description}
 
+                                formats={[
+                                    "header", "font", "size", "bold", "italic", "underline",
+                                    "strike", "blockquote", "list", "bullet", "indent", "link",
+                                    "image", "color"
+                                ]}
+                                style={{ height: "150px", marginBottom: "30px" }}
+                                theme="snow"
+                                onChange={(value) => handleInputChange(value, "description")}
+                            />
+
+
+                        </div>
+                    </Form.Item>
                     <Form.Item label="Short Description" name={"shortDes"} rules={[{ required: true, message: 'Please input short Description!' }]}>
                         <Input.TextArea onChange={(e) => handleInputChange(e.target.value, "shortDes")} />
                     </Form.Item>
@@ -139,40 +204,45 @@ const CreateJobForm: React.FC = () => {
                         <Input onChange={(e) => handleInputChange(e.target.value, "educationLevel")} />
                     </Form.Item>
 
-                    <Form.Item label="Skills Weight" name={"skills_weight"} rules={[{ required: true, message: 'Please input Skills Weight!' }, { validator: checkTotalWeight }]}>
+                    <Form.Item label="Skills Weight" name={"skills_weight"} rules={[{ required: true, message: 'Please input Skills Weight!' }]}>
                         <InputNumber style={{ width: '100%' }} onChange={(value) => handleInputChange(value || 0, "skills_weight")} />
                     </Form.Item>
 
-                    <Form.Item label="Experience Weight" name={"yearsExp_weight"} rules={[{ required: true, message: 'Please input Experience Weight!' }, { validator: checkTotalWeight }]}>
+                    <Form.Item label="Experience Weight" name={"yearsExp_weight"} rules={[{ required: true, message: 'Please input Experience Weight!' }]}>
                         <InputNumber style={{ width: '100%' }} onChange={(value) => handleInputChange(value || 0, "yearsExp_weight")} />
                     </Form.Item>
 
-                    <Form.Item label="Languages Weight" name={"languages_weight"} rules={[{ required: true, message: 'Please input Languages Weight!' }, { validator: checkTotalWeight }]}>
+                    <Form.Item label="Languages Weight" name={"languages_weight"} rules={[{ required: true, message: 'Please input Languages Weight!' }]}>
                         <InputNumber style={{ width: '100%' }} onChange={(value) => handleInputChange(value || 0, "languages_weight")} />
                     </Form.Item>
 
-                    <Form.Item label="Job Title Weight" name={"job_title_weight"} rules={[{ required: true, message: 'Please input Job weight!' }, { validator: checkTotalWeight }]}>
+                    <Form.Item label="Job Title Weight" name={"job_title_weight"} rules={[{ required: true, message: 'Please input Job weight!' }]}>
                         <InputNumber style={{ width: '100%' }} onChange={(value) => handleInputChange(value || 0, "job_title_weight")} />
                     </Form.Item>
 
-                    <Form.Item label="Education Weight" name={"education_weight"} rules={[{ required: true, message: 'Please input your Education Weight!' }, { validator: checkTotalWeight }]}>
+                    <Form.Item label="Education Weight" name={"education_weight"} rules={[{ required: true, message: 'Please input your Education Weight!' }]}>
                         <InputNumber style={{ width: '100%' }} onChange={(value) => handleInputChange(value || 0, "education_weight")} />
                     </Form.Item>
 
-                    <Form.Item label="Certificates Weight" name={"certificates_weight"} rules={[{ required: true, message: 'Please input your Certification weight!' }, { validator: checkTotalWeight }]}>
+                    <Form.Item label="Certificates Weight" name={"certificates_weight"} rules={[{ required: true, message: 'Please input your Certification weight!' }]}>
                         <InputNumber style={{ width: '100%' }} onChange={(value) => handleInputChange(value || 0, "certificates_weight")} />
+                    </Form.Item>
+
+                    <Form.Item label="Score Needed to Pass" name={"score"} rules={[{ required: true, message: 'Please input Score to Pass!' }]}>
+                        <InputNumber style={{ width: '100%' }} onChange={(value) => handleInputChange(value || 0, "score")} />
                     </Form.Item>
 
                     <Form.Item>
                         <Button type="primary" style={{ width: '100%' }} htmlType="submit" icon={<PlusOutlined />}>
-                            Create Job
+                            {isEditMode ? 'Update Job' : 'Create Job'}
                         </Button>
                     </Form.Item>
                 </Form>
             </Card>
-        </Spin>
+
+        </Spin >
 
     );
 };
 
-export default CreateJobForm;
+export default CreateEditJobForm;

@@ -1,38 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Button, Table, Modal, Descriptions, Divider, Tooltip as Tool, Space } from 'antd';
-import { Tooltip, Legend, Cell, Pie, PieChart } from 'recharts';
-import { Document, Page } from 'react-pdf';
+import { Button, Table, Modal, Tooltip as Tool, Space } from 'antd';
+import { ArrowLeftOutlined } from '@ant-design/icons';
 import axios from 'axios'; import { pdfjs } from 'react-pdf'; import { Tabs } from 'antd';
 import { EyeOutlined, FilePdfOutlined } from '@ant-design/icons';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
+import { UICandidate } from './UICandidate';
+import { CandidateDetails } from './CandidateDetails';
 
 
 const { TabPane } = Tabs;
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`
-
-interface UICandidate {
-    id: string,
-    name: string,
-    resume: string,
-    skills: string[],
-    years_exp: number,
-    languages: string[],
-    certifications: string[],
-    educations: string[],
-    positions: string[],
-    email: string,
-    linkedin: string,
-    phone: string,
-    skills_weight: number,
-    yearsExp_weight: number,
-    languages_weight: number,
-    positions_weight: number,
-    education_weight: number,
-    certificates_weight: number,
-    total_score: number,
-    job_id: string
-}
 
 export default function Candidates() {
     const [candidates, setCandidates] = useState<UICandidate[]>([]);
@@ -40,18 +18,31 @@ export default function Candidates() {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [isPdfModalVisible, setPdfIsModalVisible] = useState(false);
     const [numPages, setNumPages] = useState(null);
-    const [pdfData, setPdfData] = useState<Uint8Array>();
+    const [mimimumRequiredScore, setMimimumRequiredScore] = useState(0);
+    const [pdfData, setPdfData] = useState<any>();
 
     const { id } = useParams<{ id: string }>();
 
     useEffect(() => {
+        fetchJobScore();
         fetchCandidates();
     }, []);
 
     const fetchCandidates = async () => {
         try {
             const response = await axios.get(`http://127.0.0.1:8000/job/${id}/resumes`);
+            console.log(response.data)
             setCandidates(response.data);
+
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const fetchJobScore = async () => {
+        try {
+            const response = await axios.get(`http://127.0.0.1:8000/jobs/${id}/score`);
+            setMimimumRequiredScore(response.data);
 
         } catch (error) {
             console.log(error);
@@ -84,13 +75,13 @@ export default function Candidates() {
                     <Tool title="View pdf">
                         <Button shape="circle" icon={<FilePdfOutlined />} onClick={() => {
                             console.log(record.resume)
-                            const binary_string = window.atob(record.resume);
-                            const len = binary_string.length;
-                            const bytes = new Uint8Array(len);
-                            for (let i = 0; i < len; i++) {
-                                bytes[i] = binary_string.charCodeAt(i);
+                            const byteCharacters = atob(record.resume);
+                            const byteNumbers = new Array(byteCharacters.length);
+                            for (let i = 0; i < byteCharacters.length; i++) {
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
                             }
-                            setPdfData(bytes);
+                            const byteArray = new Uint8Array(byteNumbers);
+                            setPdfData(record.resume);
                             setPdfIsModalVisible(true)
                         }} />
                     </Tool>
@@ -99,74 +90,76 @@ export default function Candidates() {
         },
     ];
 
+    const filterPassedCandidates = (): UICandidate[] => {
+        return candidates.filter(candidate => candidate.total_score >= mimimumRequiredScore)
+            .sort((x, y) => y.total_score - x.total_score)
+    }
+
+    const filterRejectedCandidates = (): UICandidate[] => {
+        return candidates.filter(candidate => candidate.total_score < mimimumRequiredScore)
+            .sort((x, y) => y.total_score - x.total_score)
+    }
+
     return (
         <>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Space style={{ marginBottom: 16, display: 'flex' }}>
+                    <Link to={"/admin/jobs"}><Button icon={<ArrowLeftOutlined />} type="link" size="large">All Jobs</Button></Link>
+
+                </Space>
+
+                <Space style={{ marginTop: 16, display: 'flex' }}>
+                    <Link to={`/admin/jobs/${id}`}><Button type="link" size="large">Job Details</Button></Link>
+
+                </Space>
+            </div >
+
+
             <Tabs defaultActiveKey="1">
                 <TabPane tab="Passed Candidates" key="1">
-                    <Table pagination={{ pageSize: 10, position: ['bottomCenter'] }} dataSource={candidates.filter(candidate => candidate.total_score >= 70)} columns={columns} rowKey="id" />
+                    <div style={{ overflowX: 'auto' }}>
+                        <Table pagination={{ pageSize: 10, position: ['bottomCenter'] }} dataSource={filterPassedCandidates()} columns={columns} rowKey="id" />
+                    </div>
                 </TabPane>
                 <TabPane tab="All Candidates" key="2">
-                    <Table pagination={{ pageSize: 10, position: ['bottomCenter'] }} dataSource={candidates} columns={columns} rowKey="id" />
+                    <Table pagination={{ pageSize: 10, position: ['bottomCenter'] }} dataSource={candidates.sort((x, y) => y.total_score - x.total_score)} columns={columns} rowKey="id" />
                 </TabPane>
 
                 <TabPane tab="Rejected Candidates" key="3">
-                    <Table pagination={{ pageSize: 10, position: ['bottomCenter'] }} dataSource={candidates.filter(candidate => candidate.total_score < 70)} columns={columns} rowKey="id" />
+                    <Table pagination={{ pageSize: 10, position: ['bottomCenter'] }} dataSource={filterRejectedCandidates()} columns={columns} rowKey="id" />
                 </TabPane>
             </Tabs>
 
             <Modal
                 visible={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
+                key={selectedCandidate ? selectedCandidate.id : 'empty'}
+                onCancel={() => {
+                    setIsModalVisible(false)
+                    setSelectedCandidate(null)
+                }}
                 width={800}
                 footer={null}
+                bodyStyle={{ maxHeight: '600px', overflow: 'auto' }}
+                wrapClassName="candidate-details-modal"
             >
-                {selectedCandidate && (
-                    <>
-                        <h2>{selectedCandidate.name}</h2>
+                {selectedCandidate && <CandidateDetails selectedCandidate={selectedCandidate} />}
+                <style>{`
+          .candidate-details-modal .ant-modal-body::-webkit-scrollbar {
+            width: 8px;   /* vertical scrollbar width */
+            height: 12px;
+          }
 
-                        <Descriptions column={1}>
-                            <Descriptions.Item label="Email">{selectedCandidate.email}</Descriptions.Item>
-                            <Descriptions.Item label="Phone">{selectedCandidate.phone}</Descriptions.Item>
-                            <Descriptions.Item label="LinkedIn">{selectedCandidate.linkedin}</Descriptions.Item>
-                            <Descriptions.Item label="Skills">{selectedCandidate.skills.join(', ')}</Descriptions.Item>
-                            <Descriptions.Item label="Languages">{selectedCandidate.languages.join(', ')}</Descriptions.Item>
-                            <Descriptions.Item label="Certifications">{selectedCandidate.certifications.join(', ')}</Descriptions.Item>
-                            <Descriptions.Item label="Educations">{selectedCandidate.educations.join(', ')}</Descriptions.Item>
-                            <Descriptions.Item label="Positions">{selectedCandidate.positions.join(', ')}</Descriptions.Item>
-                        </Descriptions>
-
-                        <Divider />
-                        <div style={{ display: "flex", justifyContent: "center" }}>
-                            <PieChart width={600} height={400} >
-                                <Pie
-                                    data={weights}
-                                    cx={250}
-                                    cy={150}
-                                    labelLine={false}
-                                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(2)}%`}
-                                    outerRadius={70}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                >
-                                    {weights.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                                <Legend />
-                            </PieChart>
-                        </div>
-
-                    </>
-                )}
+          .candidate-details-modal .ant-modal-body::-webkit-scrollbar-button {
+            height: 100px;
+          }
+        `}</style>
             </Modal>
 
             <Modal open={isPdfModalVisible} onCancel={() => setPdfIsModalVisible(false)}
-                width={650}
+                width={800}
+
                 footer={null}>
-                <Document file={{ data: pdfData }}>
-                    <Page pageNumber={1} />
-                </Document>
+                <embed src={`data:application/pdf;base64,${pdfData}`} type="application/pdf" width="750px" height="800px"></embed>
             </Modal>
         </>
     );

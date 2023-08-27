@@ -36,24 +36,6 @@ export const JobsTable: React.FC = () => {
         }
     };
 
-    const handleEdit = (record: UIJob) => {
-        form.setFieldsValue(record);
-        setVisible(true);
-    };
-
-    const handleDelete = (record: UIJob) => {
-        // Implement delete logic here
-    };
-
-    const handleOk = () => {
-        // Implement create/update logic here
-        setVisible(false);
-    };
-
-    const handleCancel = () => {
-        setVisible(false);
-    };
-
     const columns = [
         {
             title: 'Title',
@@ -72,7 +54,9 @@ export const JobsTable: React.FC = () => {
             render: (_: any, record: UIJob) => (
                 <Space size="middle">
                     <Tooltip title="View Job">
-                        <Button shape="circle" icon={<EyeOutlined />} />
+                        <Link to={`/admin/jobs/${record.id}`}>
+                            <Button shape="circle" icon={<EyeOutlined />} />
+                        </Link>
                     </Tooltip>
                     <Tooltip title="Candidates">
                         <Link to={`${record.id}/candidates`}>
@@ -80,7 +64,9 @@ export const JobsTable: React.FC = () => {
                         </Link>
                     </Tooltip>
                     <Tooltip title="Edit Job">
-                        <Button shape="circle" icon={<EditOutlined />} />
+                        <Link to={`/admin/jobs/edit/${record.id}`}>
+                            <Button shape="circle" icon={<EditOutlined />} />
+                        </Link>
                     </Tooltip>
                     <Tooltip title="Delete Job">
                         <Button shape="circle" icon={<DeleteOutlined />} />
@@ -89,6 +75,7 @@ export const JobsTable: React.FC = () => {
             ),
         },
     ];
+
 
     return (
         <div>

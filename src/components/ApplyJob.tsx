@@ -20,7 +20,7 @@ export const ApplyJob: React.FC<{ jobId: string, jobTitle: string, visible: bool
       const formData = new FormData();
       formData.append('name', values.name);
       formData.append('yearsExp', values.experience);
-      formData.append('file', values.resume.file);  
+      formData.append('file', values.resume.file);
       setLoading(true)
 
       const response = await axios.post(`http://127.0.0.1:8000/job/${jobId}/resumes`, formData, {
@@ -29,7 +29,7 @@ export const ApplyJob: React.FC<{ jobId: string, jobTitle: string, visible: bool
         }
       });
 
-      if(response.status === 200){
+      if (response.status === 200) {
         message.success("Application submitted successfully");
       }
 
@@ -61,22 +61,22 @@ export const ApplyJob: React.FC<{ jobId: string, jobTitle: string, visible: bool
 
   return (
     <div>
-      <Modal  closable={!loading} maskClosable={false} title={<div style={{ textAlign: 'center', fontSize: "1.3rem", marginBottom: "1.5rem", width: "90%" }}>Apply for {jobTitle} Position</div>} okButtonProps={{ disabled: loading }} cancelButtonProps={{ disabled: loading }} open={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
-        
-    <Spin spinning={loading}>
-        <Form form={form} name="jobApplication">
-          <Form.Item name="name" rules={[{ required: true, message: 'Please input your name!' }]}>
-            <Input placeholder="Name" />
-          </Form.Item>
-          <Form.Item name="experience" rules={[{ required: true, message: 'Please input your years of experience!' }]}>
-            <Input placeholder="Years of Experience" type="number" />
-          </Form.Item>
-          <Form.Item name="resume" valuePropName="file" rules={[{ required: true, message: 'Please upload your resume!' }]}>
-            <Upload listType='picture' accept='application/pdf' {...props}>
-              <Button icon={<UploadOutlined />}>Upload PDF</Button>
-            </Upload>
-          </Form.Item>
-        </Form>
+      <Modal closable={!loading} maskClosable={false} title={<div style={{ textAlign: 'center', fontSize: "1.3rem", marginBottom: "1.5rem", width: "90%" }}>Apply for {jobTitle} Position</div>} okButtonProps={{ disabled: loading }} cancelButtonProps={{ disabled: loading }} open={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
+
+        <Spin spinning={loading}>
+          <Form form={form} name="jobApplication">
+            <Form.Item name="name" rules={[{ required: true, message: 'Please input your name!' }]}>
+              <Input placeholder="Name" />
+            </Form.Item>
+            <Form.Item name="experience" rules={[{ required: true, message: 'Please input your years of experience!' }]}>
+              <Input placeholder="Years of Experience" type="number" />
+            </Form.Item>
+            <Form.Item name="resume" valuePropName="file" rules={[{ required: true, message: 'Please upload your resume!' }]}>
+              <Upload listType='picture' accept='application/pdf' {...props}>
+                <Button icon={<UploadOutlined />}>Upload PDF</Button>
+              </Upload>
+            </Form.Item>
+          </Form>
         </Spin>
       </Modal>
     </div>

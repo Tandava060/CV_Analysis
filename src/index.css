@@ -1,0 +1,14 @@
+.candidate-details-modal .ant-modal-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .candidate-details-modal .ant-modal-body {
+    flex: 1;
+    overflow: auto;
+  }
+  
+  .candidate-details-modal .ant-modal-close-x {
+    order: 1;
+  }
+  

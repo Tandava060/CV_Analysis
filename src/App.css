@@ -1,9 +1,28 @@
-#root {
-  max-width: 1280px;
+main {
+  max-width: 1480px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
 }
+
+body {
+  margin: 0;
+}
+
+.menu-header {
+  color: #fff;
+  font-size: 18px;
+}
+
+.menu-container {
+  display: flex;
+  justify-content: space-between;
+}
+
+.auth-item {
+  margin-left: auto;
+}
+
 
 .logo {
   height: 6em;

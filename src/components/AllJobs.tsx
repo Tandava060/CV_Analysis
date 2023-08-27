@@ -41,41 +41,26 @@ export const AllJobs: React.FC = () => {
     setSelectedJob(job);
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
-  const props = {
-    beforeUpload: (file: any) => {
-        if (file.type !== 'application/pdf') {
-            message.error(`${file.name} is not a pdf file`);
-        }
-        return file.type === 'application/pdf' ? true : Upload.LIST_IGNORE;
-    },
-};
-
   return (
     <div>
       {jobs.map((job: Job) => (
-         <Card
-         key={job.id}
-         title={<Title level={4}>{job.title}</Title>}
-         style={{ marginBottom: 16 }}
-       >
-         <div style={{ textAlign: 'left',marginBottom: '1rem' }}>
-         <Text  strong>Company: </Text><Text style={{ paddingBottom: '30px' }}>{job.company}</Text><br />
-             <div style={{marginBottom: '1rem'}}>
-             <Text  strong>Category: </Text><Text>{job.field}</Text>
-             </div>
-           <Paragraph style={{ color: "rgb(48 45 45 / 88%)" }}>{job.shortDes}</Paragraph>
-
-
-           <Text strong>Skills: </Text><Text>{job.skills.join(', ')}</Text>
-         </div>
+        <Card
+          key={job.id}
+          title={<Title level={4}>{job.title}</Title>}
+          style={{ marginBottom: 16 }}
+        >
+          <div style={{ textAlign: 'left', marginBottom: '1rem' }}>
+            <Text strong>Company: </Text><Text style={{ paddingBottom: '30px' }}>{job.company}</Text><br />
+            <div style={{ marginBottom: '1rem' }}>
+              <Text strong>Category: </Text><Text>{job.field}</Text>
+            </div>
+            <Paragraph style={{ color: "rgb(48 45 45 / 88%)" }}>{job.shortDes}</Paragraph>
+            <Text strong>Skills: </Text><Text>{job.skills.join(', ')}</Text>
+          </div>
           <div style={{ display: "flex", justifyContent: "end" }}>
             <Button type="primary" style={{ marginRight: 16 }} onClick={() => applyForJob(job)}>Apply</Button>
             <Link to={job.id}>
-            <Button>Details</Button></Link>
+              <Button>Details</Button></Link>
           </div>
         </Card>
       ))}

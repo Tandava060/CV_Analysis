@@ -2,13 +2,15 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import { ConfigProvider } from 'antd'
-import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom'
+import { Navigate, RouterProvider, createBrowserRouter, redirect } from 'react-router-dom'
 import { AllJobs } from './components/AllJobs.tsx'
-import CreateJobForm from './components/NewJob.tsx'
 import { JobsTable } from './components/JobTables.tsx'
 import { JobDescription } from './components/Job.tsx'
 import Candidates from './components/CandidatesTable.tsx'
+import LoginForm from './components/login.tsx'
+import { AdminJobDescription } from './components/JobAdmin.tsx'
+import EditJob from './components/EditJob.tsx'
+import CreateEditJobForm from './components/NewJob.tsx'
 
 const router = createBrowserRouter([
   {
@@ -21,7 +23,15 @@ const router = createBrowserRouter([
       },
       {
         path: "new",
-        element: <CreateJobForm />,
+        element: <CreateEditJobForm />,
+      },
+      {
+        path: "edit/:id",
+        element: <EditJob />,
+      },
+      {
+        path: ":id",
+        element: <AdminJobDescription />,
       },
       {
         path: ":id/candidates",
@@ -42,6 +52,16 @@ const router = createBrowserRouter([
         element: <JobDescription />,
       },
     ]
+  },
+  {
+    path: "/",
+    element: <Navigate to="/jobs" />
+
+  },
+  {
+    path: "/login",
+    element: <LoginForm />
+
   }
 ]);
 
