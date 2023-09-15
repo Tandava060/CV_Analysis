@@ -9,7 +9,6 @@ export const CandidateDetails: React.FC<{ selectedCandidate: UICandidate }> = ({
 
     const speedometerId = `gauge-chart-${selectedCandidate.id}`;
 
-
     return (
         <>
             <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -78,8 +77,8 @@ export const CandidateDetails: React.FC<{ selectedCandidate: UICandidate }> = ({
                     <div style={{ display: "flex", alignItems: "center" }}>
                         <p style={{ width: "60%" }}>Years of Experience Weightage:</p>
                         <Progress
-                            percent={selectedCandidate.job_year_exp_weight}
-                            format={() => `${selectedCandidate.job_year_exp_weight.toFixed(2)}%`}
+                            percent={selectedCandidate.yearsExp_weight}
+                            format={() => `${selectedCandidate.yearsExp_weight.toFixed(2)}%`}
                         />
                     </div>
                 )}

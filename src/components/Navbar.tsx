@@ -30,13 +30,17 @@ const NavBar = () => {
                         <a href="/admin/jobs">Admin</a>
                     </Menu.Item>
                     <Menu.Item key="auth">
-                        {isLoggedIn ? (
-                            <span onClick={handleLogout}>
-                                Logout
-                            </span>
-                        ) : (
-                            <a href="/login">Login</a>
-                        )}
+                        <a onClick={handleLogout}>
+                            Logout
+                        </a>
+                    </Menu.Item>
+                </ div>
+            )}
+
+            {!isLoggedIn && (
+                <div style={{ marginLeft: 'auto' }}>
+                    <Menu.Item key="auth">
+                        <a href="/login">Login</a>
                     </Menu.Item>
                 </ div>
             )}

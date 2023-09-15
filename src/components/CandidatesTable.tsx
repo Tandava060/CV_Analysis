@@ -91,7 +91,7 @@ export default function Candidates() {
     ];
 
     const filterPassedCandidates = (): UICandidate[] => {
-        return candidates.filter(candidate => candidate.total_score >= mimimumRequiredScore)
+        return candidates.filter(candidate => candidate.total_score >= mimimumRequiredScore).map((candidate, index) => { return { ...candidate, total_score: Number(candidate.total_score.toFixed(2)) } })
             .sort((x, y) => y.total_score - x.total_score)
     }
 
